@@ -156,6 +156,7 @@ def scrape_data(driver):
         print("No items found")
         return
     
+    toggle_detailed_break_up_section(driver)
 
     # No of hospitals under selected category and dsitrct
     print(str(len(entries)) + " items fetched.")
