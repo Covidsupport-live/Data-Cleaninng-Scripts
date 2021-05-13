@@ -65,7 +65,7 @@ chrome_options = Options()
 def init_scrape(chrome_options,endpoint,PATH_TO_DRIVER=r'/usr/bin/chromedriver'):
     driver = webdriver.Chrome(executable_path = PATH_TO_DRIVER, options=chrome_options)
     driver.get(endpoint)
-    wait = WebDriverWait(driver,20)
+    wait = WebDriverWait(driver,30)
     wait.until(EC.element_to_be_clickable((By.ID,"ctl00_ContentPlaceHolder1_ddl_District")))
     return driver,wait
 
@@ -93,7 +93,7 @@ def select_district_and_wait_until_load(driver,wait,district_name):
         driver.find_element_by_xpath("//select[@name='ctl00$ContentPlaceHolder1$ddl_District']/option[text()='{}']".format(district_name)).click()
         while still_loading(driver,wait) != "none":
             driver.implicitly_wait(2)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(5)
         wait.until(EC.element_to_be_clickable((By.ID,"ctl00_ContentPlaceHolder1_GridView2")))
     except:
         raise Exception("ERROR : Can't select district")
@@ -120,6 +120,15 @@ def select_page_pagination_section(driver,page_no):
     except:
         raise Exception("ERROR : Switching page for pagination")
         
+def try_to_switch_to_first_page(driver):
+    try:
+        driver.find_element_by_xpath("//*[@id='ctl00_ContentPlaceHolder1_GridView2']/tbody/tr[1]/td/table/tbody/tr/td[{}]/a".format(str(1))).click()
+        while still_loading(driver,wait) != "none":
+            driver.implicitly_wait(2)
+        driver.implicitly_wait(2)
+        wait.until(EC.element_to_be_clickable((By.ID,"ctl00_ContentPlaceHolder1_GridView2")))
+    except:
+        print("ERROR : Maybe first page is already selected !")
         
 # Click on all the "View Detailed break up option"
 def toggle_detailed_break_up_section(driver):
@@ -157,6 +166,7 @@ def MobileCleanData(data):
         
         except ValueError:
             print(f"{item} failed")
+            return 0,[0]
     # Will return a tupple of (<No of mobile numbers>, [list of <mobileno>])
     return len(result),result
 
@@ -214,7 +224,6 @@ def still_loading(driver,wait):
         return "error"
     
 
-
 driver,wait = init_scrape(chrome_options,endpoint)
 for district_lable,district_id in using_district_list.items():
 #     print(district_lable,district_id)
@@ -223,8 +232,12 @@ for district_lable,district_id in using_district_list.items():
         select_district_and_wait_until_load(driver,wait,district_lable)
         time.sleep(5)
         no_of_pages = no_of_pages_for_selected_district_and_type(driver)
+        print(f"\n\n{no_of_pages}\n\n")
         global_buggy_pnum = 0
         for pg_no in range(no_of_pages):
+            if pg_no == 0:
+                try_to_switch_to_first_page(driver)
+                time.sleep(10)
             if pg_no != 0 or (pg_no==0 and global_buggy_pnum!=0) :
                 while True:
                     if scraping:
@@ -239,4 +252,3 @@ for district_lable,district_id in using_district_list.items():
                 driver.implicitly_wait(10)
             scrape_data(driver)
         print(f"Exiting from District : {district_lable} Type : {hospital_type} Page No : {pg_no}")
-
