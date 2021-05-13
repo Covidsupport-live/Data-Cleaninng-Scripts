@@ -187,9 +187,9 @@ def scrape_data(driver):
 driver,wait = init_scrape(chrome_options,endpoint)
 for district_lable,district_id in using_district_list.items():
 #     print(district_lable,district_id)
-    select_district_and_wait_until_load(driver,wait,district_lable)
     for hospital_type in using_hospital_type:
         select_hospital_type(driver,using_hospital_type[hospital_type]["webkey"])
+        select_district_and_wait_until_load(driver,wait,district_lable)
         no_of_pages = no_of_pages_for_selected_district_and_type(driver)
         
         global_buggy_pnum = 0
@@ -198,7 +198,6 @@ for district_lable,district_id in using_district_list.items():
                 global_buggy_pnum = pg_no
                 select_page_pagination_section(driver,pg_no+1)
                 
-            toggle_detailed_break_up_section(driver)
             scrape_data(driver)
         print(f"Exiting from District : {district_lable} Type : {hospital_type} Page No : {pg_no}")
 
